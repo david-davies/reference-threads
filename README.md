@@ -20,3 +20,17 @@ As an example, consider the differences between the following operation types:
 
 The introducer the rank-2 type is the key difference between these abstractions. This is a small
 ergonomic price to pay for the luxury of not needing the type-parameter on the rest of the computation.
+
+## Unsoundness
+The `RT` monad is a hybrid between the safe `ST` and the more unsafe `IO` monad. While `RT` cannot
+perform `IO`, it is still possible for a `Ref` to leak out from underneath its enclosing scope by
+packing it into an existential.
+
+```hs
+data EscapedRef a = forall r. EscapedRef (Ref r a)
+escape :: a -> RT (EscapedRef a)
+escape x = newRef x (return . EscapedRef)
+```
+
+This effectively decays it into the equivalent of an `IORef` when unpacked. However, it is not
+possible to use `coerce` to allow a reference to escape its scope.
