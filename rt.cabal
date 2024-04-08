@@ -26,7 +26,8 @@ version:            0.1.0.0
 synopsis:           A more fine-grained version of state threads (ST)
 
 -- A longer description of the package.
--- description:
+description:        Introduces the RT monad, which can be used to have more fine-grained STRefs without an extra parameter
+                    in the monad.
 
 -- URL for the project homepage or repository.
 homepage:           https://github.com/j-mie6/reference-threads
@@ -50,8 +51,9 @@ build-type:         Simple
 -- Extra doc files to be distributed with the package, such as a CHANGELOG or a README.
 extra-doc-files:    CHANGELOG.md
 
--- Extra source files to be distributed with the package, such as examples, or a tutorial module.
--- extra-source-files:
+source-repository head
+    type:     git
+    location: git://github.com/j-mie6/reference-threads.git
 
 common warnings
     ghc-options: -Wall
