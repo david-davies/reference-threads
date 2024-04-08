@@ -1,27 +1,18 @@
 {-# LANGUAGE Trustworthy #-}
-{-# LANGUAGE DataKinds, MagicHash, RoleAnnotations, UnboxedTuples, RankNTypes #-}
-module Data.Ref (module Data.Ref) where
+{-# LANGUAGE MagicHash, UnboxedTuples, RankNTypes, TypeOperators #-}
+module Data.Ref (Ref, module Data.Ref) where
 
-import Control.Monad.RT (RT(RT))
+import Control.Monad.RT.Unsafe (RT(RT))
+import Data.Ref.Impl (Ref(Ref))
 
-import GHC.Base (MutVar#, RealWorld, newMutVar#, readMutVar#, writeMutVar#, sameMutVar#, isTrue#)
+import GHC.Base (newMutVar#, readMutVar#, writeMutVar#)
 
 import GHC.IORef (IORef(IORef))
 import GHC.STRef (STRef(STRef))
 
-{-
-The `r` parameter is deliberately nominal here, which prevents the use of
-coerce to "safetly" escape the lifetime of a reference:
+import Data.Type.Equality ((:~:)(Refl))
+import Unsafe.Coerce (unsafeCoerce)
 
-> escape :: a -> RT (Ref r a)
-> escape x = newRef x (return . coerce)
-
-Would compile if the annotation was left as phantom (which is the inferred).
-This is clearly not something we want to allow, so nominal it is.
--}
-type role Ref nominal representational
--- Don't even expose the constructor, then it's pretty much safe?
-data Ref r a = Ref (MutVar# RealWorld a)
 
 {-# INLINABLE newRef #-}
 newRef :: a -> (forall r. Ref r a -> RT b) -> RT b
@@ -44,6 +35,8 @@ writeRef (Ref ref#) x = RT $ \s# ->
 fromIORef :: IORef a -> Ref r a
 fromIORef (IORef (STRef ref#)) = Ref ref#
 
--- It's nice that two references must clearly have the same lifetime to be equal
-instance Eq (Ref r a) where
-  Ref ref1# == Ref ref2# = isTrue# (sameMutVar# ref1# ref2#)
+-- returns a proof that if two references are equal, they must have the same lifetime
+lifetimeEqual :: Ref r1 a -> Ref r2 a -> Maybe (r1 :~: r2)
+lifetimeEqual (Ref ref1#) ref2
+  | Ref ref1# == ref2 = Just (unsafeCoerce Refl)
+  | otherwise         = Nothing

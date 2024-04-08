@@ -64,6 +64,7 @@ library
     exposed-modules:  Control.Monad.RT
                       Control.Monad.RT.Unsafe
                       Data.Ref
+                      Data.Ref.Impl
                       --Data.Array.RT
 
     -- Other library packages from which modules are imported.
